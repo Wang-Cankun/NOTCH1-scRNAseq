@@ -2,3 +2,7 @@
 *.qsave
 *.rds
 *.h5
+result*
+*.log
+*.html
+*.h5ad

@@ -21,7 +21,6 @@ library(here)
 library(qs)
 library(Polychrome)
 # remotes::install_github('chris-mcginnis-ucsf/DoubletFinder')
-library(DoubletFinder)
 
 
 ```
@@ -98,11 +97,11 @@ Similar to [Single cell transcriptomic analysis of cardiac differentiation from 
 
 Since we want to perform QC as permissive of QC thresholding as possible, we can revisit QC if downstream clustering cannot be interpreted.
 
-No mito thres was applied since we have many cells have high mito percentage
-
 These cells are removed:
 
 - Cells with above 50% ribosomal reads
+
+- Cells with above 30% mitochondrial reads
 
 - Cells detected less than 200 genes
 
@@ -115,7 +114,7 @@ These cells are removed:
 
 combined_qc <-
   subset(combined, subset = percent.ribo < 50 &
-           nCount_RNA < 200000 & percent.mito < 25)
+           nCount_RNA < 200000 & percent.mito < 30)
 
 ```
 
@@ -157,11 +156,11 @@ VlnPlot(combined_qc, features = c("S.Score", "G2M.Score"), group.by = "orig.iden
 ```
 
 
-```{r,echo=F,eval=F,message=FALSE,warning=F}
+```{r,echo=F,eval=T,message=FALSE,warning=F}
 # Save Seurat object
 # qs::qsave is much faster than save RDS
 
-qs::qsave(combined_qc, "combined.qsave") 
+qs::qsave(combined_qc, "combined_qc.qsave") 
 #combined <- qs::qread('combined.qsave')
 
 ```
