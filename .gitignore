@@ -1,0 +1,4 @@
+/data
+*.qsave
+*.rds
+*.h5
