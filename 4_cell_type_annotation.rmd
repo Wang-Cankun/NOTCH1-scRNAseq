@@ -94,6 +94,18 @@ dev.off()
 p1
 ```
 
+# NOTCH1 expression
+
+
+```{r,echo=F,eval=T,message=F,warning=F,error=F}
+
+FeaturePlot(combined, "NOTCH1", pt.size = 0.7)
+
+VlnPlot(combined, "NOTCH1", group.by = "orig.ident")
+```
+
+
+
 # Cluster-specific genes
 
 
