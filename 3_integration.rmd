@@ -67,23 +67,24 @@ combined <- IntegrateData(anchorset = combine.anchors, dims = 1:30)
 
 # Dimension reduction
 
-```{r,echo=F,eval=F,message=F,warning=F,error=F}
+```{r,echo=F,eval=T,message=F,warning=F,error=F}
 
 DefaultAssay(combined) <- "integrated"
 combined <- ScaleData(combined, verbose = FALSE)
 combined <- RunPCA(combined, npcs = 30, verbose = FALSE)
-combined <- RunUMAP(combined, reduction = "pca", dims = 1:30)
+combined <- RunUMAP(combined, reduction = "pca", dims = 1:30, n.components = 3L)
+combined <- RunTSNE(combined, reduction = "pca", dims = 1:30, n.components = 3L)
 combined <- FindNeighbors(combined, reduction = "pca", dims = 1:30)
-combined <- FindClusters(combined, resolution = 0.3)
+combined <- FindClusters(combined, resolution = 0.2)
 
-```
-
-```{r,echo=F,eval=F,message=F,warning=F,error=F}
 
 ```
 
 
+
 ```{r,echo=F,eval=F,message=F,warning=F,error=F}
+
+DimPlot(combined, reduction = "umap", cols = as.vector(palette36.colors(36)[-2]),label = T)
 
 ```
 

@@ -20,6 +20,7 @@ library(patchwork)
 library(here)
 library(qs)
 library(Polychrome)
+library(scater)
 # remotes::install_github('chris-mcginnis-ucsf/DoubletFinder')
 
 
@@ -95,6 +96,9 @@ VlnPlot(
 
 Similar to [Single cell transcriptomic analysis of cardiac differentiation from human PSCs reveals HOPX-dependent cardiomyocyte maturation](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6220122/).
 
+We filtered outlier genes and cells which were outside the range of 5x median absolute deviation (MAD)
+of the number of cells with ribosomal reads, mitochondrial reads, and total read mapped to cells to remove noise due to sequencing depth or cell conditions. Further, cells with above 50% ribosomal reads, or above 30% mitochondrial reads, and genes detected in fewer than 3 cells were also removed.
+
 Since we want to perform QC as permissive of QC thresholding as possible, we can revisit QC if downstream clustering cannot be interpreted.
 
 These cells are removed:
@@ -105,16 +109,68 @@ These cells are removed:
 
 - Cells detected less than 200 genes
 
-- Cells with more than 200,000 total number of molecules
+- Cells with total counts outside 5x MAD
 
-- Cells with genes detected in fewer than 3 cells
+These genes were removed: 
+
+- Genes detected in fewer than 3 cells
 
 
 ```{r,echo=F,eval=T,message=FALSE,warning=F}
+# MAD filtering
+count.mad.lower <-
+  isOutlier(combined$nCount_RNA,
+            nmads = 5,
+            log = T,
+            type = "lower")
+
+count.mad.higher <-
+  isOutlier(combined$nCount_RNA, nmads = 5, type = "higher")
+
+mito.mad.higher <-
+  isOutlier(
+    combined$percent.mito,
+    nmads = 5,
+    log = F,
+    type = "higher"
+  )
+
+ribo.mad.higher <-
+  isOutlier(
+    combined$percent.ribo,
+    nmads = 5,
+    log = F,
+    type = "higher"
+  )
+
+combined <-
+  AddMetaData(combined, count.mad.lower, col.name = "count.mad.lower")
+
+combined <-
+  AddMetaData(combined, count.mad.higher, col.name = "count.mad.higher")
+
+combined <-
+  AddMetaData(combined, mito.mad.higher, col.name = "mito.mad.higher")
+
+combined <-
+  AddMetaData(combined, ribo.mad.higher, col.name = "ribo.mad.higher")
+
+```
+
+```{r,echo=F,eval=T,message=FALSE,warning=F}
+
+
 
 combined_qc <-
-  subset(combined, subset = percent.ribo < 50 &
-           nCount_RNA < 200000 & percent.mito < 30)
+  subset(
+    combined,
+    subset = percent.ribo < 50 &
+      percent.mito < 30 &
+      count.mad.lower == F &
+      count.mad.higher == F &
+      mito.mad.higher == F &
+      ribo.mad.higher == F
+  )
 
 ```
 

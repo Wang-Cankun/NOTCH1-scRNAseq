@@ -6,3 +6,6 @@ result*
 *.log
 *.pptx
 *.h5ad
+*.log
+*result*
+*.Rhistory
