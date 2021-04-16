@@ -1,4 +1,7 @@
 /data
+/pdf
+/docs
+
 *.qsave
 *.rds
 *.h5
