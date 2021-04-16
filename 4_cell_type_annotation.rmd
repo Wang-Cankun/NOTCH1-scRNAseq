@@ -51,6 +51,7 @@ DefaultAssay(combined) <- "RNA"
 custom_color <-
   as.character(palette36.colors(36)[-2])[1:length(levels(Idents(combined)))]
 Idents(combined) <- combined$seurat_clusters
+
 ```
 
 # Identify cell clusters
@@ -361,27 +362,30 @@ Number of cells for each cluster:
 
 table(combined$orig.ident, combined$seurat_clusters)
 
+
+
 ```
 
 
 ```{r,echo=F,eval=T,message=F,warning=F,error=F, fig.width=8,fig.height=16}
 
-Idents(combined) <- combined$seurat_clusters
+
 
 p3 <-
   DimPlot(
     combined,
     reduction = "umap",
+    group.by = "seurat_clusters",
     split.by = "orig.ident",
     cols = as.vector(palette36.colors(36)[-2]),
-    ncol = 2,
-    pt.size = 0.7
+    ncol = 6,
+    pt.size = 0.6
   )
 
 png(
   paste("cluster_split_by_sample.png", sep = ""),
-  width = 2000,
-  height = 4000,
+  width = 6000,
+  height = 2000,
   res = 300
 )
 
@@ -399,26 +403,41 @@ p3
 
 Some of genes are not presented in the data, I have renamed some of these genes:
 
-- T -> ?
+- T -> TBXT
 
-- FLK1 -> KDR
+- FLK1 -> KDR, CD309, VEGFR
 
 - CD31 (PECAM-1) -> PECAM1
 
-- SMA -> ?
+- SMA -> ACTA2
 
-- TE-7 -> ?
+- TE-7 -> TE7
 
+These gene symbols were not found in the data
+
+CD309, VEGFR, TE7
 
 ```{r,echo=F,eval=F,message=F,warning=F,error=F}
 library(SCINA)
 library(preprocessCore)
 signatures <- preprocess.signatures("provided_marker.csv")
-
+library(cowplot)
 DefaultAssay(combined) <- "RNA"
 this_markers <- unlist(signatures)
+#this_markers[!this_markers %in% rownames(combined)]
+
 for (i in seq_along(this_markers)) {
-  p_scina <- FeaturePlot(combined, as.character(this_markers[i]), ncol = 1)
+  p1 <-
+    FeaturePlot(
+      combined,
+      as.character(this_markers[i]),
+      split.by = "orig.ident",
+      combine = F,
+      pt.size = 0.3
+    )
+  
+  p2 <- CombinePlots(p1, ncol = 6, legend = "none")
+  
   png(
     paste(
       names(this_markers[i]),
@@ -427,17 +446,21 @@ for (i in seq_along(this_markers)) {
       ".png",
       sep = ""
     ),
-    width = 1800,
-    height = 1500,
+    width = 6000,
+    height = 1800,
     res = 300
   )
-  print(p_scina)
+  print(p2)
   dev.off()
 }
 
-
 for (i in seq_along(this_markers)) {
-  p_scina <- VlnPlot(combined, as.character(this_markers[i]), ncol = 1, group.by = "seurat_clusters")
+  p <-
+    VlnPlot(combined,
+            as.character(this_markers[i]),
+            ncol = 1,
+            group.by = "seurat_clusters",
+    )
   png(
     paste(
       names(this_markers[i]),
@@ -450,18 +473,22 @@ for (i in seq_along(this_markers)) {
     height = 1500,
     res = 300
   )
-  print(p_scina)
+  print(p)
   dev.off()
 }
 
 
 
 for (i in seq_along(this_markers)) {
-  p_scina <- VlnPlot(combined, as.character(this_markers[i]), ncol = 1, group.by = "orig.ident")
+  p_scina <-
+    VlnPlot(combined,
+            as.character(this_markers[i]),
+            ncol = 1,
+            group.by = "orig.ident")
   png(
     paste(
       names(this_markers[i]),
-      "_violin_",
+      "_violin_by_time_",
       as.character(this_markers[i]),
       ".png",
       sep = ""

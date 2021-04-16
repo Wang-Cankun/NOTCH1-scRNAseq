@@ -93,7 +93,8 @@ DimPlot(combined, reduction = "umap", cols = as.vector(palette36.colors(36)[-2])
 ```
 
 ```{r,echo=F,eval=F,message=F,warning=F,error=F}
-
+# Re-order time label
+combined$orig.ident <- factor(combined$orig.ident, levels = levels(as.factor(combined$orig.ident))[c(1,4,6,2,3,5,7,10,12,8,9,11)])
 ```
 
 ```{r,echo=F,eval=T,message=FALSE,warning=F}
