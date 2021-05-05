@@ -433,10 +433,23 @@ for (i in seq_along(this_markers)) {
       as.character(this_markers[i]),
       split.by = "orig.ident",
       combine = F,
-      pt.size = 0.3
+      pt.size = 0.25,
+      keep.scale = "all",
+      cols = c('#C0C0C0', '#B00D23') # From Apple (PRODUCT)RED
     )
   
-  p2 <- CombinePlots(p1, ncol = 6, legend = "none")
+  p2 <- lapply(p1, function(x) {
+    x + theme(
+      axis.text.x = element_blank(),
+      axis.text.y = element_blank(),
+      axis.title.x = element_blank(),
+      axis.title.y = element_blank(),
+      axis.ticks.x = element_blank(),
+      axis.ticks.y = element_blank()
+    )
+  })
+  
+  p3 <- CombinePlots(p2, ncol = 6, legend = "right")
   
   png(
     paste(
@@ -450,7 +463,7 @@ for (i in seq_along(this_markers)) {
     height = 1800,
     res = 300
   )
-  print(p2)
+  print(p3)
   dev.off()
 }
 
@@ -459,8 +472,7 @@ for (i in seq_along(this_markers)) {
     VlnPlot(combined,
             as.character(this_markers[i]),
             ncol = 1,
-            group.by = "seurat_clusters",
-    )
+            group.by = "seurat_clusters",)
   png(
     paste(
       names(this_markers[i]),
@@ -476,7 +488,6 @@ for (i in seq_along(this_markers)) {
   print(p)
   dev.off()
 }
-
 
 
 for (i in seq_along(this_markers)) {
@@ -509,6 +520,31 @@ for (i in seq_along(this_markers)) {
 
 ```
 
+
+```{r,echo=F,eval=F,message=FALSE,warning=F}
+# Save Seurat object
+Idents(combined) <- combined$orig.ident
+obj <- subset(combined, idents = "N1KO30")
+FeaturePlot(obj, features = "MYL2")
+
+VlnPlot(obj, features = "EOMES")
+
+
+obj <- subset(combined, idents = "Con30")
+FeaturePlot(obj, features = "MYL2")
+
+VlnPlot(obj, features = "MYL2")
+
+
+
+ct_label <- as.factor(combined$seurat_clusters)
+levels(ct_label) <- c("1")
+combined <- AddMetaData(combined, ct_label, col.name = "cell_type")
+
+table(combined$seurat_clusters, combined$orig.ident)
+DimPlot(combined, reduction = "umap", cols = as.vector(palette36.colors(36)[-2]),label = T)
+
+```
 
 
 ```{r,echo=F,eval=F,message=FALSE,warning=F}
