@@ -1,7 +1,9 @@
 /data
 /pdf
 /docs
-
+/archive
+docs/
+pdf/
 *.qsave
 *.rds
 *.h5
@@ -9,7 +11,14 @@ result*
 *.log
 *.pptx
 *.h5ad
+*.h5Seurat
 *.log
 *result*
 *.Rhistory
 *.png
+*.zip
+*.loom
+pdf/
+ppt/
+result*/
+.Rhistory

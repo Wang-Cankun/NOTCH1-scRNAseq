@@ -1,19 +1,28 @@
-iPSCs,Mesoderm,Endoderm,Ectoderm,Cardiac mesoderm,FHF progenitor,SHF progenitor,Epicardial progenitor,Atrial cardiomyocytes,Ventricular cardiomyocytes,Left ventricle (LV) cardiomyocytes,SAN pacemaker,Vascular endothelial cells,Vascular smooth muscle cells,Cardiac fibroblast,Paper
-POU5F1,MIXL1,CXCR4,OTX2,MESP1,TBX5,ISL1,WT1,MYL7,MYL2,HAND1,TBX18,PECAM1,MYH11,DDR2,DNMT3B
-NANOG,TBXT,SOX17,PAX6,KDR,NKX2-5,NKX2-5,TBX18,NR2F2,IRX4,TBX5,HCN4,CDH5,ACTA2,TCF21,NANOG
-SOX2,,FOXA2,SOX1,PDGFRA,HCN4,KDR,,TNNT2,TNNT2,CITED1,TNNT2,,,WT1,POU5F1
-,,GATA4,,,,,,,,TNNT2,,,,,EOMES
-,,,,,,,,,,,,,,,MESP1
-,,,,,,,,,,,,,,,MIXL1
-,,,,,,,,,,,,,,,ISL1
-,,,,,,,,,,,,,,,TMEM88
-,,,,,,,,,,,,,,,HAND1
-,,,,,,,,,,,,,,,GATA4
-,,,,,,,,,,,,,,,ATP2A2
-,,,,,,,,,,,,,,,PLN
-,,,,,,,,,,,,,,,MYH6
-,,,,,,,,,,,,,,,MYH7
-,,,,,,,,,,,,,,,MYL7
-,,,,,,,,,,,,,,,NKX2-5
-,,,,,,,,,,,,,,,TBX5
-,,,,,,,,,,,,,,,TNNI1
+cell_type,gene,direction
+iPSCs,POU5F1,pos
+Mesoderm,MIXL1,pos
+Mesoderm,TBXT,pos
+Cardiac mesoderm,MESP1,pos
+Cardiac mesoderm,PDGFRA,pos
+SHF progenitor,ISL1,pos
+SHF progenitor,NKX2-5,pos
+FHF progenitor,NKX2-5,pos
+FHF progenitor,ISL1,neg
+Epicardial progenitor,WT1,pos
+Epicardial progenitor,TBX18,pos
+Atrial cardiomyocytes,MYH6,pos
+Atrial cardiomyocytes,NR2F2,pos
+Atrial cardiomyocytes,TNNT2,pos
+Ventricular cardiomyocytes,MYL2,pos
+Ventricular cardiomyocytes,MYH7,pos
+Ventricular cardiomyocytes,TNNT2,pos
+Pacemaker cells,HCN4,pos
+Pacemaker cells,TNNT2,pos
+Left ventricle (LV) cardiomyocytes,HAND1,pos
+Left ventricle (LV) cardiomyocytes,TBX5,pos
+Vascular endothelial cells,PECAM1,pos
+Vascular endothelial cells,CDH5,pos
+Vascular smooth muscle cells,MYH11,pos
+Vascular smooth muscle cells,ACTA2,pos
+Cardiac fibroblast,DDR2,pos
+Cardiac fibroblast,TCF21,pos

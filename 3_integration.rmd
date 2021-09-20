@@ -28,6 +28,7 @@ library(Polychrome)
 
 ```{r,echo=F,eval=T,message=F,warning=F,error=F}
 
+here::i_am("3_integration.rmd")
 here::set_here()
 print(paste("Current working directory:", here::here()))
 
@@ -37,11 +38,7 @@ print(paste("Current working directory:", here::here()))
 
 ```{r,echo=F,eval=T,message=F,warning=F,error=F}
 
-####
-
-#combined <- readRDS("combined.rds")
 combined <- qs::qread('combined_qc.qsave')
-####
 
 ```
 
@@ -86,28 +83,23 @@ combined <- FindClusters(combined, resolution = 0.2)
 
 DimPlot(combined, reduction = "umap", cols = as.vector(palette36.colors(36)[-2]),label = T)
 
-```
-
-```{r,echo=F,eval=F,message=F,warning=F,error=F}
 
 ```
 
+
 ```{r,echo=F,eval=F,message=F,warning=F,error=F}
-# Re-order time label
+# Re-order the time 
 combined$orig.ident <- factor(combined$orig.ident, levels = levels(as.factor(combined$orig.ident))[c(1,4,6,2,3,5,7,10,12,8,9,11)])
 ```
 
 ```{r,echo=F,eval=T,message=FALSE,warning=F}
-# Save Seurat object
-# qs::qsave is much faster than save RDS
 
 qs::qsave(combined, "combined.qsave") 
-#combined <- qs::qread('combined.qsave')
 
 ```
 
-```{r,echo=F,eval=F,message=F,warning=F,error=F}
-# Manually save the rds, do not save on knitr
-saveRDS(combined, "combined.rds")
-```
+# Session info
 
+```{r,echo=F,eval=T,message=F,warning=F}
+sessionInfo()
+```

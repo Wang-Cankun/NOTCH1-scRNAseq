@@ -180,52 +180,52 @@ firstup <- function(x) {
   return (x)
 }
 
-
-
-## remove the x-axis text and tick
-## plot.margin to adjust the white space between each plot.
-## ... pass any arguments to VlnPlot in Seurat
-modify_vlnplot<- function(obj, 
-                          feature, 
-                          pt.size = 0, 
-                          plot.margin = unit(c(-0.75, 0, -0.75, 0), "cm"),
-                          ...) {
-  p<- VlnPlot(obj, features = feature, pt.size = pt.size, ... )  + 
-    xlab("") + ylab(feature) + ggtitle("") + 
-    theme(legend.position = "none", 
-          axis.text.x = element_blank(), 
-          axis.ticks.x = element_blank(), 
-          axis.title.y = element_text(size = rel(1), angle = 0), 
-          axis.text.y = element_text(size = rel(1)), 
-          plot.margin = plot.margin ) 
-  return(p)
-}
-
-## extract the max value of the y axis
-extract_max<- function(p){
-  ymax<- max(ggplot_build(p)$layout$panel_scales_y[[1]]$range$range)
-  return(ceiling(ymax))
-}
-
-
-## main function
-StackedVlnPlot<- function(obj, features,
-                          pt.size = 0, 
-                          plot.margin = unit(c(-0.75, 0, -0.75, 0), "cm"),
-                          ...) {
-  
-  plot_list<- purrr::map(features, function(x) modify_vlnplot(obj = obj,feature = x, ...))
-  
-  # Add back x-axis title to bottom plot. patchwork is going to support this?
-  plot_list[[length(plot_list)]]<- plot_list[[length(plot_list)]] +
-    theme(axis.text.x=element_text(), axis.ticks.x = element_line())
-  
-  # change the y-axis tick to only max value 
-  ymaxs<- purrr::map_dbl(plot_list, extract_max)
-  plot_list<- purrr::map2(plot_list, ymaxs, function(x,y) x + 
-                            scale_y_continuous(breaks = c(y)) + 
-                            expand_limits(y = y))
-  
-  p<- patchwork::wrap_plots(plotlist = plot_list, ncol = 1)
-  return(p)
+enrichment_dotplot <- function(terms, filename, width=4000, height=2000) {
+  terms[, 1] <-
+    str_replace_all(terms[, 1], " \\(GO.*", "")
+  terms <- terms %>%
+    dplyr::filter(Adjusted.P.value < 0.1)
+  if (nrow(terms) > 0) {
+    new_df <- terms %>%
+      mutate(
+        Term = as_factor(str_replace_all(Term, " \\(GO.*", "")),
+        len = lengths(str_split(Genes, ";")),
+        pval = -log10(Adjusted.P.value)
+      ) %>%
+      rowwise() %>%
+      mutate(gene_ratio = eval(parse(text = str_remove_all(Overlap, " ")))) %>%
+      dplyr::select(Term, len, pval, gene_ratio, Adjusted.P.value) %>%
+      mutate(Term = fct_reorder(Term, Adjusted.P.value))
+    
+    new_df$Term <-
+      factor(new_df$Term, levels = rev(levels(factor(new_df$Term))))
+    
+    p1 <- ggplot(new_df,
+                 aes(x = gene_ratio,
+                     y = Term)) +
+      geom_point(aes(size = len, color = Adjusted.P.value)) +
+      scale_color_gradient(low = "blue",
+                           high = "red",
+                           trans = 'reverse') +
+      theme_bw() +
+      ylab("") +
+      labs(size = "Overlapping count", color = "Adjusted p-value") +
+      theme(
+        legend.title = element_text(size = 14, ),
+        legend.text = element_text(size = 10, ),
+        axis.text = element_text(size = 14),
+        axis.title = element_text(size = 14)
+      ) +
+      scale_x_continuous(name = "Overlapping ratio") +
+      scale_size(range = c(6, 14))
+    
+    png(
+      filename,
+      width = width,
+      height = height,
+      res = 300
+    )
+    print(p1)
+    dev.off()
+  }
 }
