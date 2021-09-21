@@ -1,4 +1,4 @@
-This folder should contain velocity loom file. 
+This folder contain velocity loom file and did not upload to GitHub due to size limit.
 
 ```
 $ tree --du -h

@@ -1,1 +1,0 @@
-This folder contains code to generate RNA velocity loom files in the 'velocity_loom' folder.

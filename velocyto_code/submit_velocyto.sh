@@ -1,4 +1,4 @@
-
+#!/usr/bin/bash
 while read NAME
 do
    echo $NAME
