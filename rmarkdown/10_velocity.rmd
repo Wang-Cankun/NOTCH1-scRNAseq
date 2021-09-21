@@ -1,0 +1,292 @@
+---
+title: "RNA Velocity"
+author: "Cankun Wang"
+date: "`r format(Sys.time(), '%m/%d/%Y')`"
+output: 
+  html_document:
+    toc: true
+    toc_float: true
+    number_sections: true
+    df_print: paged
+    code_folding: hide
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(Seurat)
+library(cowplot)
+library(dplyr)
+library(ggplot2)
+library(patchwork)
+library(here)
+library(qs)
+library(Polychrome)
+library(RColorBrewer)
+library(tidyverse)
+library(fgsea)
+library(monocle3)
+library(batchelor)
+library(Matrix.utils)
+library(tidyverse)
+library(SeuratWrappers)
+#BiocManager::install(c('batchelor', 'Matrix.utils'))
+```
+
+
+# Set working dir
+
+```{r,echo=F,eval=T,message=F,warning=F,error=F}
+here::i_am("10_velocity.rmd")
+here::set_here()
+print(paste("Current working directory:", here::here()))
+
+```
+
+# Load data
+
+```{r,echo=F,eval=T,message=F,warning=F,error=F}
+source("functions.R")
+
+combined <- qs::qread('combined.qsave')
+DefaultAssay(combined) <- "RNA"
+Idents(combined) <- combined$seurat_clusters
+#custom_color <- as.character(palette36.colors(36)[-2])[1:length(levels(Idents(combined)))]
+
+custom_color <-
+  as.character(Polychrome::glasbey.colors()[-1])
+
+two_color <- c('#C0C0C0', '#B00D23')
+
+provided_marker <-
+  read.csv("provided_marker_manual.csv", header = T)
+provided_marker$cell_type <- as.factor(provided_marker$cell_type)
+
+Idents(combined) <- combined$orig.ident
+DefaultAssay(combined) <- "RNA"
+
+
+i = 1
+j = 1
+k = 1
+idx = 1
+
+
+days <- levels(combined$orig.ident)
+
+
+dbs <-
+  c(
+    "GO_Molecular_Function_2018",
+    "GO_Cellular_Component_2018",
+    "GO_Biological_Process_2018",
+    "KEGG_2019_Human"
+  )
+
+
+```
+
+# Export read function from velocyto.R
+```{r}
+
+
+read.loom.matrices <- function(file, engine = 'hdf5r') {
+  if (engine == 'h5') {
+    cat('reading loom file via h5...\n')
+    f <- h5::h5file(file, mode = 'r')
+    
+    cells <- f["col_attrs/CellID"][]
+    
+    genes <- f["row_attrs/Gene"][]
+    
+    dl <-
+      c(spliced = "/layers/spliced",
+        unspliced = "/layers/unspliced",
+        ambiguous = "/layers/ambiguous")
+    
+    if ("/layers/spanning" %in% h5::list.datasets(f)) {
+      dl <- c(dl, c(spanning = "/layers/spanning"))
+    }
+    dlist <- lapply(dl, function(path) {
+      m <-
+        as(f[path][], 'dgCMatrix')
+      rownames(m) <- genes
+      colnames(m) <- cells
+      return(m)
+    })
+    h5::h5close(f)
+    return(dlist)
+  } else if (engine == 'hdf5r') {
+    cat('reading loom file via hdf5r...\n')
+    f <- hdf5r::H5File$new(file, mode = 'r')
+    cells <- f[["col_attrs/CellID"]][]
+    genes <- f[["row_attrs/Gene"]][]
+    dl <- c(spliced = "layers/spliced",
+            unspliced = "layers/unspliced",
+            ambiguous = "layers/ambiguous")
+    if ("layers/spanning" %in% hdf5r::list.datasets(f)) {
+      dl <- c(dl, c(spanning = "layers/spanning"))
+    }
+    dlist <- lapply(dl, function(path) {
+      m <- as(t(f[[path]][, ]), 'dgCMatrix')
+      rownames(m) <- genes
+      colnames(m) <- cells
+      
+      return(m)
+    })
+    f$close_all()
+    return(dlist)
+  }
+  else {
+    warning('Unknown engine. Use hdf5r or h5 to import loom file.')
+    return(list())
+  }
+}
+
+
+```
+
+
+
+```{r}
+dir.create('result')
+dir.create('result/subpopulation')
+
+Idents(combined) <- combined$orig.ident
+DefaultAssay(combined) <- "RNA"
+
+# seq_along(levels(provided_marker$cell_type))
+day <- days[[11]]
+for (day in days) {
+  RESULT_DIR <-
+    paste0("./result/subpopulation/",
+           day,
+           "/")
+  dir.create(RESULT_DIR)
+  dir.create(paste0(RESULT_DIR, "/umap"))
+  dir.create(paste0(RESULT_DIR, "/marker"))
+  
+  Idents(combined) <- combined$orig.ident
+  
+  
+  sub_combined <- subset(combined, idents = day)
+  Idents(sub_combined) <- sub_combined$orig.ident
+  
+  DefaultAssay(sub_combined) <- "integrated"
+  sub_combined <- RunPCA(sub_combined, npcs = 20, verbose = FALSE)
+  sub_combined <-
+    RunUMAP(sub_combined, reduction = "pca", dims = 1:10)
+  sub_combined <-
+    FindNeighbors(sub_combined, reduction = "pca", dims = 1:10)
+  sub_combined <- FindClusters(sub_combined, resolution = 0.2)
+  DefaultAssay(sub_combined) <- "RNA"
+
+}
+```
+
+
+# Import Velocity data from loom file
+
+```{r}
+this_sample <- "N1KO14"
+lo1 <- read.loom.matrices(file = "./velocity_loom/N1KO14_CKDL200167812-1a-SI_GA_A10_HNNKFDSXY.loom")
+
+lo$spliced[1:20,1:20]
+
+lo <- lo1
+bm <- as.Seurat(x = lo)
+
+# Rename cell names in velocity matrix
+col_velo <- str_split_fixed(colnames(bm), ":", 2)[, 2]
+col_velo <- str_replace_all(col_velo, "x", "-1")
+col_velo <- paste0(this_sample, "_", col_velo)
+
+velo_cell_exist_in_RNA <- which(col_velo %in% colnames(sub_combined))
+
+col_velo <- col_velo[velo_cell_exist_in_RNA]
+
+lo$spliced <- lo$spliced[, velo_cell_exist_in_RNA]
+lo$unspliced <- lo$unspliced[,velo_cell_exist_in_RNA]
+lo$ambiguous <- lo$ambiguous[, velo_cell_exist_in_RNA]
+
+lo$spliced <- lo$spliced[, order(col_velo)]
+lo$unspliced <- lo$unspliced[, order(col_velo)]
+lo$ambiguous <- lo$ambiguous[, order(col_velo)]
+col_velo <- col_velo[order(col_velo)]
+
+bm <- as.Seurat(x = lo)
+bm <- RenameCells(bm, new.names = col_velo)
+
+
+bm[["RNA"]] <- bm[["spliced"]]
+#DefaultAssay(bm) <- "RNA"
+bm <- NormalizeData(bm)
+bm <- FindVariableFeatures(bm)
+bm <- ScaleData(bm)
+bm <- RunPCA(bm)
+bm <- RunUMAP(bm, dims = 1:20)
+bm <- FindNeighbors(bm, dims = 1:20)
+#bm <- FindClusters(bm, resolution = 0.2)
+DefaultAssay(bm) <- "RNA"
+
+library(SeuratDisk)
+SaveH5Seurat(bm, filename = "bm.h5Seurat")
+Convert("bm.h5Seurat", dest = "h5ad")
+
+```
+
+# Plots
+
+```{r}
+
+
+bm@reductions$umap@cell.embeddings <- sub_combined@reductions$umap@cell.embeddings
+bm@meta.data <- cbind(bm@meta.data, sub_combined@meta.data)
+SaveH5Seurat(bm, filename = paste0(this_sample, ".h5Seurat"))
+Convert(paste0(this_sample, ".h5Seurat"), dest = "h5ad")
+colnames(bm@meta.data)
+
+
+for (i in seq_along(provided_marker$gene)) {
+    this_gene <- provided_marker$gene[i]
+    this_ct <- as.character(provided_marker$cell_type[i])
+    p1 <-
+      FeaturePlot(bm,
+                  this_gene,
+                  pt.size = 0.4,
+                  cols = two_color,
+                  reduction = "umap",
+                  keep.scale = "all")
+    
+    png(
+      paste(
+        "./result/velocity/",this_sample,"_",
+        this_gene,
+        "_",
+        this_ct,
+        "_velocity.png",
+        sep = ""
+      ),
+      width = 2000,
+      height = 1800,
+      res = 300
+    )
+    print(p1)
+    dev.off()
+  }
+
+```
+
+# Export to AnnData
+
+
+```{r,echo=F,eval=F,message=FALSE,warning=F}
+DefaultAssay(sub_combined) <- "integrated"
+transfer.anchors <- FindTransferAnchors(reference = sub_combined, query = bm, features = VariableFeatures(object = sub_combined),
+    reference.assay = "RNA", query.assay = "spliced", reduction = "cca")
+
+```
+
+
+
+
+
