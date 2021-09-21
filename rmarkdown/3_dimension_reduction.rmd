@@ -46,15 +46,19 @@ custom_color <-
 
 # Dimension reduction
 
+Here we only want to visualize the sample differences in one UMAP. The batch removal is actually not needed as the cell types are defined by checking provided marker geners at each cell, the seurat clusters won't be used for downstream analysis.
+
+We adjusted UMAP neighbors and distance paramsters to make the visualization more 'spread'.
+
 ```{r,echo=F,eval=T,message=F,warning=F,error=F}
-# Clusters won't be used for downstream analysis, as batch removal is actually not needed
+
 
 DefaultAssay(combined) <- "RNA"
 combined <- FindVariableFeatures(combined, verbose = FALSE)
 combined <- ScaleData(combined, verbose = FALSE)
 combined <- RunPCA(combined, npcs = 20, verbose = FALSE)
 # Better UMAP points spread
-combined <- RunUMAP(combined, reduction = "pca", dims = 1:20, n.components = 3L, n.neighbors = 50, min.dist = 0.6)
+combined <- RunUMAP(combined, reduction = "pca", dims = 1:20, n.components = 3L, n.neighbors = 30, min.dist = 0.4)
 combined <- RunTSNE(combined, reduction = "pca", dims = 1:20, n.components = 3L)
 combined <- FindNeighbors(combined, reduction = "pca", dims = 1:20)
 
@@ -79,7 +83,7 @@ DimPlot(
 
 # 3D
 
-```{r,echo=F,eval=T,message=F,warning=F,error=F, fig.width=10, fig.height=8}
+```{r,echo=F,eval=T,message=F,warning=F,error=F, fig.width=6, fig.height=8}
 
 DefaultAssay(combined) <- "RNA"
 

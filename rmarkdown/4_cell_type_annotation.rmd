@@ -56,7 +56,7 @@ custom_color <-
   as.character(palette36.colors(36)[-2])[1:length(levels(Idents(combined)))]
 two_color <- c('#C0C0C0', '#B00D23')
 
-provided_marker <- read_csv("provided_marker.csv") %>%
+provided_marker <- read_csv("../provided_marker.csv") %>%
   mutate(cell_type = factor(cell_type))
 
 provided_marker
@@ -84,16 +84,22 @@ DefaultAssay(combined) <- "RNA"
 ```{r,echo=F,eval=T,message=T,warning=F,error=F}
 
 Idents(combined) <- combined$orig.ident
-DimPlot(combined, reduction = "umap", cols = as.vector(palette36.colors(36)[-2]),label = T)
-
-#DimPlot(combined, reduction = "tsne", cols = as.vector(palette36.colors(36)[-2]),label = T)
+DimPlot(
+  combined,
+  reduction = "umap",
+  cols = as.vector(palette36.colors(36)[-2]),
+  label = T,
+  pt.size = 0.6,
+  repel = T,
+  label.box = T
+)
 
 ```
 
 
 ```{r,echo=F,eval=T,message=F,warning=F,error=F, fig.width=12,fig.height=8}
 
-Idents(combined) <- combined$seurat_clusters
+Idents(combined) <- combined$orig.ident
 
 p2 <-
   DimPlot(
@@ -166,13 +172,47 @@ Criteria:
 - If a cell matches multiple cell type based on marker expression, use the cell type label with the highest expression
 
 ```{r,echo=F,eval=F,message=FALSE,warning=F}
-#DefaultAssay(combined) <- 'integrated'
+
 Idents(combined) <- combined$orig.ident
 DefaultAssay(combined) <- "RNA"
 
 cell_type_range <- seq_along(levels(provided_marker$cell_type))
 marker_genes <- unique(provided_marker$gene)
 marker_expr <- Seurat::FetchData(object = combined, vars = marker_genes)
+
+
+avg_cell_type_expr <- tibble()
+i=1
+for(i in cell_type_range) {
+  this_ct <- levels(provided_marker$cell_type)[i]
+  this_markers <- provided_marker %>%
+    filter(cell_type == this_ct) %>%
+    pull(gene)
+  this_direction <- provided_marker %>%
+    filter(cell_type == this_ct) %>%
+    pull(direction)
+  this_data <- Seurat::FetchData(object = combined, vars = this_markers)
+  selected_cells <- rownames(marker_expr)
+  for (k in seq_along(this_markers)) {
+    if (this_direction[k] == "pos") {
+      this_cells <- this_data %>%
+        filter(get(this_markers[k]) >  0.1) %>%
+        rownames_to_column("cell") %>%
+        pull(cell)
+      selected_cells <- intersect(selected_cells, this_cells)
+    } else{
+      this_cells <- this_data %>%
+        filter(get(this_markers[k]) <= 0.1) %>%
+        rownames_to_column("cell") %>%
+        pull(cell)
+      selected_cells <- intersect(selected_cells, this_cells)
+    }
+  }
+  
+  selected_cells <- unique(selected_cells)
+}
+
+
 
 # seq_along(levels(provided_marker$cell_type))
 for (idx in seq_along(levels(provided_marker$cell_type))) {
