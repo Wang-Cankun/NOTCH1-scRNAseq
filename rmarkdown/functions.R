@@ -111,9 +111,10 @@ generate_cell_type <- function(seurat_obj, marker_file_path) {
     cluster_extend = TRUE,
     cds_gene_id_type = "SYMBOL",
     rank_prob_ratio = 1.2,
-    cluster_extend_max_frac_unknown = 0.95,
+    cluster_extend_max_frac_unknown = 0.99,
     cluster_extend_max_frac_incorrect = 0.5
   )
   
   return(cds)
 }
+
