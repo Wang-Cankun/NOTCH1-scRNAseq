@@ -1,0 +1,14 @@
+>Atrial cardiomyocytes
+expressed: NR2F2, MYH6, TNNT2
+
+>Ventricular cardiomyocytes
+expressed: MYL2, MYH7, TNNT2
+
+>Pacemaker cells
+expressed: HCN4, TNNT2
+
+>Vascular smooth muscle cells
+expressed: MYH11, ACTA2
+
+>Cardiac fibroblast
+expressed: DDR2, TCF21

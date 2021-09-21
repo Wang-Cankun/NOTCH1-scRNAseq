@@ -1,0 +1,8 @@
+>iPSCs
+expressed: POU5F1
+
+>Mesoderm
+expressed: TBXT, MIXL1
+
+>Cardiac mesoderm
+expressed: MESP1, PDGFRA

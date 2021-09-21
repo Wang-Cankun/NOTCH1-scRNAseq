@@ -1,0 +1,15 @@
+>Mesoderm
+expressed: TBXT, MIXL1
+
+>Cardiac mesoderm
+expressed: MESP1, PDGFRA
+
+>SHF progenitors
+expressed: NKX2-5, ISL1
+
+>FHF progenitors
+expressed: NKX2-5
+not expressed: ISL1
+
+>Epicardial progenitors
+expressed: WT1, TBX18
